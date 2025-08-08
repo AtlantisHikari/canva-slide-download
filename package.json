@@ -7,7 +7,7 @@
     "dev": "next dev",
     "dev-prefix": "PORT=3004 node serve-with-prefix.js",
     "build": "next build",
-    "export": "next build && next export",
+    "export": "next build",
     "start": "next start",
     "start-prefix": "PORT=3004 NODE_ENV=production node serve-with-prefix.js",
     "lint": "next lint",

@@ -95,6 +95,11 @@ export default function HomePage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Canva Slide Downloader</h1>
               <p className="text-gray-600">高品質 Canva 簡報下載工具</p>
+              <div className="mt-2 text-sm">
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                  GitHub Pages 展示版本 - 完整功能請部署到 Vercel
+                </span>
+              </div>
             </div>
           </div>
         </div>
