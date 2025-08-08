@@ -1,0 +1,599 @@
+// Integration Tests: Complete Download Workflow
+// Tests for 完整下載流程整合測試
+
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { DownloadWorkflow } from '../../src/lib/download-workflow';
+import { CanvaUrlParser } from '../../src/lib/url-parser';
+import { ScreenshotEngine } from '../../src/lib/screenshot-engine';
+import { PdfGenerator } from '../../src/lib/pdf-generator';
+import type { DownloadOptions, DownloadResult } from '../../src/types';
+
+describe('Download Workflow Integration', () => {
+  let workflow: DownloadWorkflow;
+  let mockUrlParser: jest.Mocked<CanvaUrlParser>;
+  let mockScreenshotEngine: jest.Mocked<ScreenshotEngine>;
+  let mockPdfGenerator: jest.Mocked<PdfGenerator>;
+
+  beforeEach(() => {
+    // Create mocked dependencies
+    mockUrlParser = {
+      parseUrl: jest.fn(),
+      validateUrl: jest.fn(),
+      extractDesignId: jest.fn(),
+      getDesignType: jest.fn()
+    } as any;
+
+    mockScreenshotEngine = {
+      captureSlide: jest.fn(),
+      captureAllSlides: jest.fn(),
+      getSlideCount: jest.fn(),
+      cleanup: jest.fn()
+    } as any;
+
+    mockPdfGenerator = {
+      createPdfFromImages: jest.fn(),
+      addMetadata: jest.fn(),
+      optimizePdf: jest.fn()
+    } as any;
+
+    workflow = new DownloadWorkflow(
+      mockUrlParser,
+      mockScreenshotEngine,
+      mockPdfGenerator
+    );
+  });
+
+  afterEach(async () => {
+    await workflow.cleanup();
+    jest.clearAllMocks();
+  });
+
+  describe('Complete Download Flow', () => {
+    test('should complete full download workflow successfully', async () => {
+      // TC-INTEGRATION-001: 完整下載流程測試
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      // Mock successful responses
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'DAGutBPLlkA',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(5);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue([
+        Buffer.from('slide1'),
+        Buffer.from('slide2'),
+        Buffer.from('slide3'),
+        Buffer.from('slide4'),
+        Buffer.from('slide5')
+      ]);
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.from('pdf-content'));
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeInstanceOf(Buffer);
+      expect(result.metadata.pageCount).toBe(5);
+      expect(result.metadata.designId).toBe('DAGutBPLlkA');
+      
+      // Verify workflow steps
+      expect(mockUrlParser.validateUrl).toHaveBeenCalledWith(url);
+      expect(mockUrlParser.parseUrl).toHaveBeenCalledWith(url);
+      expect(mockScreenshotEngine.getSlideCount).toHaveBeenCalledWith(url);
+      expect(mockScreenshotEngine.captureAllSlides).toHaveBeenCalled();
+      expect(mockPdfGenerator.createPdfFromImages).toHaveBeenCalled();
+    });
+
+    test('should handle URL validation failure', async () => {
+      const url = 'invalid-url';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      mockUrlParser.validateUrl.mockReturnValue(false);
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.type).toBe('INVALID_URL');
+      expect(result.error?.message).toContain('Invalid URL format');
+    });
+
+    test('should handle private presentation access', async () => {
+      const url = 'https://www.canva.com/design/PRIVATE123/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'PRIVATE123',
+        designType: 'presentation',
+        isPublic: false,
+        hasEditAccess: false
+      });
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.type).toBe('ACCESS_DENIED');
+      expect(result.error?.message).toContain('private presentation');
+    });
+
+    test('should handle screenshot capture failure', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'DAGutBPLlkA',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(5);
+      mockScreenshotEngine.captureAllSlides.mockRejectedValue(new Error('Screenshot failed'));
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.type).toBe('SCREENSHOT_ERROR');
+      expect(result.error?.message).toContain('Screenshot failed');
+    });
+
+    test('should handle PDF generation failure', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'DAGutBPLlkA',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(3);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue([
+        Buffer.from('slide1'),
+        Buffer.from('slide2'),
+        Buffer.from('slide3')
+      ]);
+      mockPdfGenerator.createPdfFromImages.mockRejectedValue(new Error('PDF generation failed'));
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.type).toBe('PDF_ERROR');
+      expect(result.error?.message).toContain('PDF generation failed');
+    });
+  });
+
+  describe('Batch Download Integration', () => {
+    test('should handle multiple presentations in batch', async () => {
+      // TC-INTEGRATION-002: 批次下載整合測試
+      const urls = [
+        'https://www.canva.com/design/TEST1/view',
+        'https://www.canva.com/design/TEST2/view',
+        'https://www.canva.com/design/TEST3/view'
+      ];
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'medium'
+      };
+
+      // Mock successful responses for all URLs
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl
+        .mockReturnValueOnce({
+          designId: 'TEST1',
+          designType: 'presentation',
+          isPublic: true,
+          hasEditAccess: false
+        })
+        .mockReturnValueOnce({
+          designId: 'TEST2',
+          designType: 'presentation',
+          isPublic: true,
+          hasEditAccess: false
+        })
+        .mockReturnValueOnce({
+          designId: 'TEST3',
+          designType: 'presentation',
+          isPublic: true,
+          hasEditAccess: false
+        });
+
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(3);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue([
+        Buffer.from('slide1'),
+        Buffer.from('slide2'),
+        Buffer.from('slide3')
+      ]);
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.from('pdf-content'));
+
+      const results = await workflow.batchDownload(urls, options);
+
+      expect(results).toHaveLength(3);
+      expect(results.filter(r => r.success)).toHaveLength(3);
+      
+      // Each result should have correct metadata
+      results.forEach((result, index) => {
+        expect(result.success).toBe(true);
+        expect(result.metadata.designId).toBe(`TEST${index + 1}`);
+        expect(result.metadata.pageCount).toBe(3);
+      });
+    });
+
+    test('should handle partial failures in batch download', async () => {
+      const urls = [
+        'https://www.canva.com/design/VALID1/view',
+        'invalid-url',
+        'https://www.canva.com/design/VALID2/view'
+      ];
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'medium'
+      };
+
+      // Mock mixed responses
+      mockUrlParser.validateUrl
+        .mockReturnValueOnce(true)   // VALID1
+        .mockReturnValueOnce(false)  // invalid-url
+        .mockReturnValueOnce(true);  // VALID2
+
+      mockUrlParser.parseUrl
+        .mockReturnValueOnce({
+          designId: 'VALID1',
+          designType: 'presentation',
+          isPublic: true,
+          hasEditAccess: false
+        })
+        .mockReturnValueOnce({
+          designId: 'VALID2',
+          designType: 'presentation',
+          isPublic: true,
+          hasEditAccess: false
+        });
+
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(2);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue([
+        Buffer.from('slide1'),
+        Buffer.from('slide2')
+      ]);
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.from('pdf-content'));
+
+      const results = await workflow.batchDownload(urls, options);
+
+      expect(results).toHaveLength(3);
+      expect(results.filter(r => r.success)).toHaveLength(2);
+      expect(results.filter(r => !r.success)).toHaveLength(1);
+      
+      // Check that invalid URL result has error
+      const invalidResult = results[1];
+      expect(invalidResult.success).toBe(false);
+      expect(invalidResult.error?.type).toBe('INVALID_URL');
+    });
+
+    test('should respect concurrency limits in batch processing', async () => {
+      const urls = Array.from({ length: 10 }, (_, i) => 
+        `https://www.canva.com/design/TEST${i}/view`
+      );
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'medium',
+        concurrency: 3
+      };
+
+      // Mock successful responses
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockImplementation((url) => ({
+        designId: url.split('/')[4],
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      }));
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(2);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue([
+        Buffer.from('slide1'),
+        Buffer.from('slide2')
+      ]);
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.from('pdf-content'));
+
+      const startTime = Date.now();
+      const results = await workflow.batchDownload(urls, options);
+      const executionTime = Date.now() - startTime;
+
+      expect(results).toHaveLength(10);
+      expect(results.filter(r => r.success)).toHaveLength(10);
+      
+      // Should complete within reasonable time with concurrency
+      expect(executionTime).toBeLessThan(30000); // 30 seconds
+    });
+  });
+
+  describe('Progress Tracking Integration', () => {
+    test('should emit progress events during download', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      const progressEvents: any[] = [];
+      workflow.on('progress', (event) => {
+        progressEvents.push(event);
+      });
+
+      // Mock successful responses
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'DAGutBPLlkA',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(5);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue([
+        Buffer.from('slide1'),
+        Buffer.from('slide2'),
+        Buffer.from('slide3'),
+        Buffer.from('slide4'),
+        Buffer.from('slide5')
+      ]);
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.from('pdf-content'));
+
+      await workflow.downloadPresentation(url, options);
+
+      // Should have received progress events
+      expect(progressEvents.length).toBeGreaterThan(0);
+      
+      // Check progress event structure
+      const lastEvent = progressEvents[progressEvents.length - 1];
+      expect(lastEvent).toMatchObject({
+        stage: expect.any(String),
+        progress: expect.any(Number),
+        message: expect.any(String)
+      });
+    });
+
+    test('should provide accurate progress percentages', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      const progressValues: number[] = [];
+      workflow.on('progress', (event) => {
+        progressValues.push(event.progress);
+      });
+
+      // Mock successful responses
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'DAGutBPLlkA',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(3);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue([
+        Buffer.from('slide1'),
+        Buffer.from('slide2'),
+        Buffer.from('slide3')
+      ]);
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.from('pdf-content'));
+
+      await workflow.downloadPresentation(url, options);
+
+      // Progress should be non-decreasing and end at 100
+      expect(progressValues.length).toBeGreaterThan(0);
+      
+      for (let i = 1; i < progressValues.length; i++) {
+        expect(progressValues[i]).toBeGreaterThanOrEqual(progressValues[i - 1]);
+      }
+      
+      expect(progressValues[progressValues.length - 1]).toBe(100);
+    });
+  });
+
+  describe('Error Recovery Integration', () => {
+    test('should retry failed operations according to policy', async () => {
+      const url = 'https://www.canva.com/design/FLAKY/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high',
+        retryPolicy: {
+          maxRetries: 2,
+          delayMs: 1000
+        }
+      };
+
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'FLAKY',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(3);
+
+      // Mock intermittent failure
+      let captureAttempts = 0;
+      mockScreenshotEngine.captureAllSlides.mockImplementation(async () => {
+        captureAttempts++;
+        if (captureAttempts < 3) {
+          throw new Error('Network timeout');
+        }
+        return [
+          Buffer.from('slide1'),
+          Buffer.from('slide2'),
+          Buffer.from('slide3')
+        ];
+      });
+
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.from('pdf-content'));
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      expect(result.success).toBe(true);
+      expect(captureAttempts).toBe(3); // Original attempt + 2 retries
+    });
+
+    test('should fail after exhausting retry attempts', async () => {
+      const url = 'https://www.canva.com/design/FAILING/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high',
+        retryPolicy: {
+          maxRetries: 2,
+          delayMs: 100
+        }
+      };
+
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'FAILING',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(3);
+      mockScreenshotEngine.captureAllSlides.mockRejectedValue(new Error('Persistent failure'));
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.type).toBe('SCREENSHOT_ERROR');
+      expect(mockScreenshotEngine.captureAllSlides).toHaveBeenCalledTimes(3); // 1 + 2 retries
+    });
+  });
+
+  describe('Performance Integration', () => {
+    test('should complete download within performance benchmarks', async () => {
+      const url = 'https://www.canva.com/design/PERF_TEST/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'high'
+      };
+
+      // Mock responses with realistic delays
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'PERF_TEST',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockImplementation(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+        return 5;
+      });
+      mockScreenshotEngine.captureAllSlides.mockImplementation(async () => {
+        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+        return Array.from({ length: 5 }, (_, i) => Buffer.from(`slide${i + 1}`));
+      });
+      mockPdfGenerator.createPdfFromImages.mockImplementation(async () => {
+        await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay
+        return Buffer.from('pdf-content');
+      });
+
+      const startTime = Date.now();
+      const result = await workflow.downloadPresentation(url, options);
+      const executionTime = Date.now() - startTime;
+
+      expect(result.success).toBe(true);
+      // Should complete within 30 seconds for 5-page presentation
+      expect(executionTime).toBeLessThan(30000);
+    });
+
+    test('should handle memory efficiently during large presentations', async () => {
+      const url = 'https://www.canva.com/design/LARGE_PRES/view';
+      const options: DownloadOptions = {
+        resolution: '1080p',
+        format: 'pdf',
+        quality: 'medium'
+      };
+
+      const initialMemory = process.memoryUsage().heapUsed;
+
+      mockUrlParser.validateUrl.mockReturnValue(true);
+      mockUrlParser.parseUrl.mockReturnValue({
+        designId: 'LARGE_PRES',
+        designType: 'presentation',
+        isPublic: true,
+        hasEditAccess: false
+      });
+      mockScreenshotEngine.getSlideCount.mockResolvedValue(50);
+      mockScreenshotEngine.captureAllSlides.mockResolvedValue(
+        Array.from({ length: 50 }, (_, i) => Buffer.alloc(1024 * 100)) // 100KB per slide
+      );
+      mockPdfGenerator.createPdfFromImages.mockResolvedValue(Buffer.alloc(1024 * 1024 * 10)); // 10MB PDF
+
+      const result = await workflow.downloadPresentation(url, options);
+
+      const finalMemory = process.memoryUsage().heapUsed;
+      const memoryIncrease = finalMemory - initialMemory;
+
+      expect(result.success).toBe(true);
+      // Memory increase should be reasonable (less than 1GB)
+      expect(memoryIncrease).toBeLessThan(1024 * 1024 * 1024);
+    });
+  });
+});
+
+// Test utilities and helpers
+export const createMockDownloadResult = (success: boolean, metadata?: any): DownloadResult => ({
+  success,
+  data: success ? Buffer.from('mock-data') : null,
+  metadata: metadata || {
+    designId: 'MOCK',
+    pageCount: 3,
+    format: 'pdf',
+    resolution: '1080p',
+    fileSize: 1024 * 1024,
+    processingTime: 5000
+  },
+  error: success ? null : {
+    type: 'MOCK_ERROR',
+    message: 'Mock error for testing'
+  }
+});
+
+export const mockDownloadOptions: DownloadOptions = {
+  resolution: '1080p',
+  format: 'pdf',
+  quality: 'high',
+  concurrency: 3,
+  retryPolicy: {
+    maxRetries: 2,
+    delayMs: 1000
+  }
+};

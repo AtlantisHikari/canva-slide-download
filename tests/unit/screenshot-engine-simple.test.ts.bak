@@ -1,0 +1,145 @@
+// Simplified Screenshot Engine Tests
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+
+// Mock puppeteer completely for unit testing
+jest.mock('puppeteer', () => ({
+  launch: jest.fn().mockResolvedValue({
+    newPage: jest.fn().mockResolvedValue({
+      goto: jest.fn().mockResolvedValue({}),
+      setViewport: jest.fn().mockResolvedValue({}),
+      setUserAgent: jest.fn().mockResolvedValue({}),
+      setRequestInterception: jest.fn().mockResolvedValue({}),
+      on: jest.fn(),
+      waitForTimeout: jest.fn().mockResolvedValue({}),
+      screenshot: jest.fn().mockResolvedValue(Buffer.from('mock-screenshot-data')),
+      close: jest.fn().mockResolvedValue({})
+    }),
+    close: jest.fn().mockResolvedValue({})
+  })
+}));
+
+import { ScreenshotEngine } from '../../src/lib/screenshot-engine';
+import { DownloadOptions } from '../../src/types';
+
+describe('ScreenshotEngine', () => {
+  let engine: ScreenshotEngine;
+  let mockOptions: DownloadOptions;
+
+  beforeEach(() => {
+    engine = new ScreenshotEngine();
+    mockOptions = {
+      quality: 'high',
+      format: 'pdf',
+      includeMetadata: true,
+      compression: 90
+    };
+    jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    try {
+      await engine.cleanup();
+    } catch (error) {
+      // Ignore cleanup errors in tests
+    }
+  });
+
+  describe('initialization', () => {
+    test('should initialize successfully', async () => {
+      await expect(engine.initialize()).resolves.not.toThrow();
+    });
+
+    test('should not reinitialize if already initialized', async () => {
+      await engine.initialize();
+      await engine.initialize(); // Should not throw or create new browser
+      expect(require('puppeteer').launch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('captureSlides', () => {
+    test('should capture slides successfully', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const pageCount = 3;
+      const progressCallback = jest.fn();
+
+      await engine.initialize();
+      const result = await engine.captureSlides(url, pageCount, mockOptions, progressCallback);
+
+      expect(result).toBeInstanceOf(Array);
+      expect(result.length).toBe(pageCount);
+      expect(progressCallback).toHaveBeenCalled();
+    });
+
+    test('should throw error if not initialized', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const pageCount = 1;
+
+      await expect(
+        engine.captureSlides(url, pageCount, mockOptions)
+      ).rejects.toThrow('Screenshot engine not initialized');
+    });
+
+    test('should handle progress callback correctly', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const pageCount = 2;
+      const progressCallback = jest.fn();
+
+      await engine.initialize();
+      await engine.captureSlides(url, pageCount, mockOptions, progressCallback);
+
+      // Should be called at least twice (once for each page)
+      expect(progressCallback).toHaveBeenCalledTimes(pageCount + 1); // +1 for initial loading message
+    });
+  });
+
+  describe('cleanup', () => {
+    test('should cleanup resources successfully', async () => {
+      await engine.initialize();
+      await expect(engine.cleanup()).resolves.not.toThrow();
+    });
+
+    test('should handle cleanup when not initialized', async () => {
+      await expect(engine.cleanup()).resolves.not.toThrow();
+    });
+  });
+
+  describe('error handling', () => {
+    test('should handle navigation errors gracefully', async () => {
+      const puppeteer = require('puppeteer');
+      const mockPage = {
+        goto: jest.fn().mockRejectedValue(new Error('Navigation failed')),
+        setViewport: jest.fn().mockResolvedValue({}),
+        setUserAgent: jest.fn().mockResolvedValue({}),
+        setRequestInterception: jest.fn().mockResolvedValue({}),
+        on: jest.fn(),
+        close: jest.fn().mockResolvedValue({})
+      };
+      
+      puppeteer.launch.mockResolvedValueOnce({
+        newPage: jest.fn().mockResolvedValue(mockPage),
+        close: jest.fn().mockResolvedValue({})
+      });
+
+      await engine.initialize();
+      
+      await expect(
+        engine.captureSlides('invalid-url', 1, mockOptions)
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('performance characteristics', () => {
+    test('should complete within reasonable time for single slide', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      
+      await engine.initialize();
+      
+      const startTime = Date.now();
+      await engine.captureSlides(url, 1, mockOptions);
+      const duration = Date.now() - startTime;
+      
+      // Should complete quickly in mocked environment
+      expect(duration).toBeLessThan(1000); // 1 second
+    });
+  });
+});

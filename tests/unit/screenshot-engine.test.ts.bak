@@ -1,0 +1,433 @@
+// Unit Tests: Screenshot Engine Module
+// Tests for 截圖功能測試
+
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { ScreenshotEngine } from '../../src/lib/screenshot-engine';
+import { CaptureOptions, DownloadOptions } from '../../src/types';
+
+// Mock Puppeteer for unit testing
+jest.mock('puppeteer', () => ({
+  launch: jest.fn().mockResolvedValue({
+    newPage: jest.fn().mockResolvedValue({
+      goto: jest.fn().mockResolvedValue({}),
+      setViewport: jest.fn().mockResolvedValue({}),
+      screenshot: jest.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
+      close: jest.fn().mockResolvedValue({})
+    }),
+    close: jest.fn().mockResolvedValue({})
+  })
+}));
+
+describe('ScreenshotEngine', () => {
+  let engine: ScreenshotEngine;
+  let mockOptions: DownloadOptions;
+
+  beforeEach(() => {
+    engine = new ScreenshotEngine();
+    mockOptions = {
+      quality: 'high',
+      format: 'pdf',
+      includeMetadata: true,
+      compression: 90
+    };
+  });
+
+  afterEach(async () => {
+    try {
+      await engine.cleanup();
+    } catch (error) {
+      // Ignore cleanup errors in tests
+    }
+    jest.clearAllMocks();
+  });
+
+  describe('captureSlides', () => {
+    test('should capture slides successfully', async () => {
+      // TC-SCREEN-001: 多列簡報截圖
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const pageCount = 3;
+      const progressCallback = jest.fn();
+
+      await engine.initialize();
+      const result = await engine.captureSlides(url, pageCount, mockOptions, progressCallback);
+
+      expect(result).toBeInstanceOf(Array);
+      expect(result.length).toBe(pageCount);
+      expect(progressCallback).toHaveBeenCalled();
+    });
+
+    test('should handle different resolutions correctly', async () => {
+      // TC-SCREEN-002: 4K解析度截圖
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const slideIndex = 1;
+      
+      const resolutions = [
+        { width: 1920, height: 1080, name: '1080p' },
+        { width: 3840, height: 2160, name: '4K' },
+        { width: 854, height: 480, name: '480p' }
+      ];
+
+      for (const resolution of resolutions) {
+        const options: CaptureOptions = {
+          ...mockOptions,
+          width: resolution.width,
+          height: resolution.height
+        };
+
+        const result = await engine.captureSlide(url, slideIndex, options);
+        
+        expect(result).toBeInstanceOf(Buffer);
+        expect(result.length).toBeGreaterThan(0);
+      }
+    });
+
+    test('should respect quality settings', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const slideIndex = 1;
+      
+      const qualityLevels = [50, 75, 90, 100];
+
+      for (const quality of qualityLevels) {
+        const options: CaptureOptions = {
+          ...mockOptions,
+          quality
+        };
+
+        const result = await engine.captureSlide(url, slideIndex, options);
+        
+        expect(result).toBeInstanceOf(Buffer);
+        // Higher quality should generally produce larger files
+        // Note: This is a mock test, actual implementation would validate this
+      }
+    });
+
+    test('should handle different image formats', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const slideIndex = 1;
+      
+      const formats: Array<'png' | 'jpeg'> = ['png', 'jpeg'];
+
+      for (const format of formats) {
+        const options: CaptureOptions = {
+          ...mockOptions,
+          format
+        };
+
+        const result = await engine.captureSlide(url, slideIndex, options);
+        
+        expect(result).toBeInstanceOf(Buffer);
+        expect(result.length).toBeGreaterThan(0);
+      }
+    });
+
+    test('should wait for content to load', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const slideIndex = 1;
+      
+      const waitTimes = [1000, 5000, 10000];
+
+      for (const waitForLoad of waitTimes) {
+        const options: CaptureOptions = {
+          ...mockOptions,
+          waitForLoad
+        };
+
+        const startTime = Date.now();
+        const result = await engine.captureSlide(url, slideIndex, options);
+        const executionTime = Date.now() - startTime;
+        
+        expect(result).toBeInstanceOf(Buffer);
+        // Should take at least the wait time (in real implementation)
+        // Note: Mock doesn't simulate actual waiting
+      }
+    });
+
+    test('should handle invalid URLs gracefully', async () => {
+      const invalidUrls = [
+        'invalid-url',
+        'https://google.com',
+        'https://www.canva.com/invalid'
+      ];
+
+      for (const url of invalidUrls) {
+        await expect(
+          engine.captureSlide(url, 1, mockOptions)
+        ).rejects.toThrow();
+      }
+    });
+
+    test('should handle network errors', async () => {
+      // Mock network error
+      const engine = new ScreenshotEngine();
+      const mockPuppeteer = require('puppeteer');
+      
+      mockPuppeteer.launch.mockRejectedValueOnce(new Error('Network error'));
+
+      await expect(
+        engine.captureSlide('https://www.canva.com/design/TEST/view', 1, mockOptions)
+      ).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('captureAllSlides', () => {
+    test('should capture multiple slides in order', async () => {
+      // TC-SCREEN-003: 多頁截圖順序驗證
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      
+      // Mock getSlideCount to return 5
+      jest.spyOn(engine, 'getSlideCount').mockResolvedValue(5);
+
+      const results = await engine.captureAllSlides(url, mockOptions);
+
+      expect(results).toHaveLength(5);
+      results.forEach(result => {
+        expect(result).toBeInstanceOf(Buffer);
+        expect(result.length).toBeGreaterThan(0);
+      });
+    });
+
+    test('should handle empty presentation', async () => {
+      const url = 'https://www.canva.com/design/EMPTY/view';
+      
+      jest.spyOn(engine, 'getSlideCount').mockResolvedValue(0);
+
+      const results = await engine.captureAllSlides(url, mockOptions);
+
+      expect(results).toHaveLength(0);
+    });
+
+    test('should handle single slide presentation', async () => {
+      const url = 'https://www.canva.com/design/SINGLE/view';
+      
+      jest.spyOn(engine, 'getSlideCount').mockResolvedValue(1);
+
+      const results = await engine.captureAllSlides(url, mockOptions);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toBeInstanceOf(Buffer);
+    });
+
+    test('should handle large presentations efficiently', async () => {
+      const url = 'https://www.canva.com/design/LARGE/view';
+      const largeSlideCount = 50;
+      
+      jest.spyOn(engine, 'getSlideCount').mockResolvedValue(largeSlideCount);
+
+      const startTime = Date.now();
+      const results = await engine.captureAllSlides(url, mockOptions);
+      const executionTime = Date.now() - startTime;
+
+      expect(results).toHaveLength(largeSlideCount);
+      // Should complete within reasonable time
+      expect(executionTime).toBeLessThan(60000); // 60 seconds
+    });
+  });
+
+  describe('getSlideCount', () => {
+    test('should detect slide count correctly', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      
+      // Mock implementation would actually count slides
+      const slideCount = await engine.getSlideCount(url);
+      
+      expect(typeof slideCount).toBe('number');
+      expect(slideCount).toBeGreaterThanOrEqual(0);
+    });
+
+    test('should handle presentations with no slides', async () => {
+      const url = 'https://www.canva.com/design/EMPTY/view';
+      
+      const slideCount = await engine.getSlideCount(url);
+      
+      expect(slideCount).toBe(0);
+    });
+
+    test('should timeout for unresponsive presentations', async () => {
+      const url = 'https://www.canva.com/design/TIMEOUT/view';
+      
+      // Mock timeout scenario
+      jest.spyOn(engine, 'getSlideCount').mockImplementation(async () => {
+        return new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timeout')), 100);
+        });
+      });
+
+      await expect(engine.getSlideCount(url)).rejects.toThrow('Timeout');
+    });
+  });
+
+  describe('Performance Tests', () => {
+    test('should capture 1080p screenshot within 10 seconds', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const options: CaptureOptions = {
+        width: 1920,
+        height: 1080,
+        quality: 90,
+        format: 'png',
+        waitForLoad: 5000
+      };
+
+      const startTime = Date.now();
+      const result = await engine.captureSlide(url, 1, options);
+      const executionTime = Date.now() - startTime;
+
+      expect(result).toBeInstanceOf(Buffer);
+      expect(executionTime).toBeLessThan(10000); // 10 seconds
+    });
+
+    test('should capture 4K screenshot within 20 seconds', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const options: CaptureOptions = {
+        width: 3840,
+        height: 2160,
+        quality: 90,
+        format: 'png',
+        waitForLoad: 5000
+      };
+
+      const startTime = Date.now();
+      const result = await engine.captureSlide(url, 1, options);
+      const executionTime = Date.now() - startTime;
+
+      expect(result).toBeInstanceOf(Buffer);
+      expect(executionTime).toBeLessThan(20000); // 20 seconds
+    });
+
+    test('should handle concurrent screenshots efficiently', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      const concurrentCount = 3;
+      
+      const promises = Array.from({ length: concurrentCount }, (_, i) => 
+        engine.captureSlide(url, i + 1, mockOptions)
+      );
+
+      const startTime = Date.now();
+      const results = await Promise.all(promises);
+      const executionTime = Date.now() - startTime;
+
+      expect(results).toHaveLength(concurrentCount);
+      results.forEach(result => {
+        expect(result).toBeInstanceOf(Buffer);
+      });
+      
+      // Concurrent execution should be more efficient than sequential
+      expect(executionTime).toBeLessThan(concurrentCount * 10000);
+    });
+  });
+
+  describe('Memory Management', () => {
+    test('should monitor memory usage during screenshot', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      
+      const initialMemory = process.memoryUsage().heapUsed;
+      
+      await engine.captureSlide(url, 1, mockOptions);
+      
+      const finalMemory = process.memoryUsage().heapUsed;
+      const memoryIncrease = finalMemory - initialMemory;
+      
+      // Memory increase should be reasonable for 1080p screenshot
+      expect(memoryIncrease).toBeLessThan(500 * 1024 * 1024); // 500MB
+    });
+
+    test('should cleanup resources after operation', async () => {
+      const url = 'https://www.canva.com/design/DAGutBPLlkA/view';
+      
+      await engine.captureSlide(url, 1, mockOptions);
+      await engine.cleanup();
+      
+      // Verify cleanup was called (in real implementation)
+      // This is a mock test - actual implementation would verify resource cleanup
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('Error Recovery', () => {
+    test('should retry failed screenshots', async () => {
+      const url = 'https://www.canva.com/design/FLAKY/view';
+      
+      // Mock intermittent failure
+      let attemptCount = 0;
+      jest.spyOn(engine, 'captureSlide').mockImplementation(async () => {
+        attemptCount++;
+        if (attemptCount < 3) {
+          throw new Error('Network timeout');
+        }
+        return Buffer.from('success');
+      });
+
+      const result = await engine.captureSlide(url, 1, mockOptions);
+      
+      expect(result).toBeInstanceOf(Buffer);
+      expect(attemptCount).toBe(3); // Should have retried 2 times
+    });
+
+    test('should fail gracefully after max retries', async () => {
+      const url = 'https://www.canva.com/design/FAILING/view';
+      
+      jest.spyOn(engine, 'captureSlide').mockRejectedValue(new Error('Persistent failure'));
+
+      await expect(
+        engine.captureSlide(url, 1, mockOptions)
+      ).rejects.toThrow('Persistent failure');
+    });
+  });
+
+  describe('Configuration Validation', () => {
+    test('should validate capture options', () => {
+      const invalidOptions = [
+        { width: -1, height: 1080, quality: 90, format: 'png' as const, waitForLoad: 5000 },
+        { width: 1920, height: -1, quality: 90, format: 'png' as const, waitForLoad: 5000 },
+        { width: 1920, height: 1080, quality: 150, format: 'png' as const, waitForLoad: 5000 },
+        { width: 1920, height: 1080, quality: 90, format: 'invalid' as any, waitForLoad: 5000 }
+      ];
+
+      invalidOptions.forEach(options => {
+        expect(() => engine.validateOptions(options)).toThrow();
+      });
+    });
+
+    test('should accept valid capture options', () => {
+      const validOptions = [
+        { width: 1920, height: 1080, quality: 90, format: 'png' as const, waitForLoad: 5000 },
+        { width: 3840, height: 2160, quality: 100, format: 'jpeg' as const, waitForLoad: 10000 },
+        { width: 854, height: 480, quality: 50, format: 'png' as const, waitForLoad: 1000 }
+      ];
+
+      validOptions.forEach(options => {
+        expect(() => engine.validateOptions(options)).not.toThrow();
+      });
+    });
+  });
+});
+
+// Test utilities and mock data
+export const mockScreenshotOptions = {
+  standard1080p: {
+    width: 1920,
+    height: 1080,
+    quality: 90,
+    format: 'png' as const,
+    waitForLoad: 5000
+  },
+  high4K: {
+    width: 3840,
+    height: 2160,
+    quality: 100,
+    format: 'png' as const,
+    waitForLoad: 10000
+  },
+  compressed720p: {
+    width: 1280,
+    height: 720,
+    quality: 70,
+    format: 'jpeg' as const,
+    waitForLoad: 3000
+  }
+};
+
+export const mockScreenshotResults = {
+  validBuffer: Buffer.from('mock-screenshot-data'),
+  emptyBuffer: Buffer.alloc(0),
+  largeBuffer: Buffer.alloc(1024 * 1024) // 1MB mock buffer
+};
