@@ -84,61 +84,73 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg text-white">
-              <Download className="w-6 h-6" />
+      <header className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-90"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="7" cy="7" r="7"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        <div className="relative container mx-auto px-4 py-12">
+          <div className="text-center text-white">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-3xl mb-6">
+              <Download className="w-10 h-10 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Canva Slide Downloader</h1>
-              <p className="text-gray-600">高品質 Canva 簡報下載工具</p>
-              <div className="mt-2 text-sm">
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                  GitHub Pages 展示版本 - 完整功能請部署到 Vercel
-                </span>
-              </div>
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+              Canva Slide Downloader
+            </h1>
+            <p className="text-xl text-blue-100 mb-6 max-w-2xl mx-auto">
+              將您的 Canva 簡報輕鬆轉換為高品質 PDF 或圖片檔案
+            </p>
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-blue-100">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              GitHub Pages 展示版本 - 完整功能請部署到 Vercel
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 -mt-6 relative z-10">
         {/* Navigation Tabs */}
-        <div className="flex gap-2 mb-8">
-          <button
-            onClick={() => setActiveTab('download')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-              activeTab === 'download'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <Download className="w-4 h-4" />
-            下載工具
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-              activeTab === 'history'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            下載記錄
-          </button>
+        <div className="flex justify-center mb-12">
+          <div className="bg-white/70 backdrop-blur-md p-2 rounded-2xl shadow-lg border border-white/20">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('download')}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  activeTab === 'download'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
+                    : 'text-gray-700 hover:bg-white/50'
+                }`}
+              >
+                <Download className="w-4 h-4" />
+                下載工具
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  activeTab === 'history'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
+                    : 'text-gray-700 hover:bg-white/50'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                下載記錄
+              </button>
+            </div>
+          </div>
         </div>
 
         {activeTab === 'download' ? (
-          <div className="max-w-4xl mx-auto space-y-8">
+          <div className="max-w-5xl mx-auto space-y-8">
             {/* Step 1: URL Input */}
-            <div className="bg-white rounded-lg border p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
-                <h2 className="text-xl font-semibold">輸入 Canva 簡報連結</h2>
+            <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-white/20 p-8 shadow-2xl hover:shadow-3xl transition-all duration-300">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl flex items-center justify-center text-lg font-bold shadow-lg">
+                  1
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">輸入 Canva 簡報連結</h2>
+                  <p className="text-gray-600">貼上您的 Canva 設計連結，我們將為您分析</p>
+                </div>
               </div>
               <UrlInput
                 onUrlSubmit={handleUrlSubmit}
@@ -147,10 +159,15 @@ export default function HomePage() {
             </div>
 
             {/* Step 2: Download Options */}
-            <div className="bg-white rounded-lg border p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                <h2 className="text-xl font-semibold">選擇下載設定</h2>
+            <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-white/20 p-8 shadow-2xl hover:shadow-3xl transition-all duration-300">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl flex items-center justify-center text-lg font-bold shadow-lg">
+                  2
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">選擇下載設定</h2>
+                  <p className="text-gray-600">自訂品質、格式和其他選項</p>
+                </div>
               </div>
               <DownloadOptions
                 options={downloadOptions}
@@ -161,10 +178,15 @@ export default function HomePage() {
 
             {/* Step 3: Progress */}
             {isProcessing && (
-              <div className="bg-white rounded-lg border p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                  <h2 className="text-xl font-semibold">下載進度</h2>
+              <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-white/20 p-8 shadow-2xl">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-2xl flex items-center justify-center text-lg font-bold shadow-lg">
+                    3
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-1">下載進度</h2>
+                    <p className="text-gray-600">正在處理您的簡報</p>
+                  </div>
                 </div>
                 <ProgressDisplay
                   progress={{
@@ -180,9 +202,17 @@ export default function HomePage() {
             )}
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg border p-6">
-              <h2 className="text-xl font-semibold mb-6">下載記錄</h2>
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-white/20 p-8 shadow-2xl">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">下載記錄</h2>
+                  <p className="text-gray-600">查看您的下載歷史和重新下載</p>
+                </div>
+              </div>
               <HistoryList
                 history={history}
                 onRedownload={(historyItem) => {
@@ -197,6 +227,18 @@ export default function HomePage() {
           </div>
         )}
       </main>
+      
+      {/* Footer */}
+      <footer className="mt-20 py-8 text-center text-gray-600">
+        <div className="container mx-auto px-4">
+          <p className="text-sm">
+            Built with ❤️ using Next.js, TypeScript & Tailwind CSS
+          </p>
+          <p className="text-xs mt-2 opacity-70">
+            🤖 Generated with <a href="https://claude.ai/code" className="underline hover:text-blue-600">Claude Code</a>
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }

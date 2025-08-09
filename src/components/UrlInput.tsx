@@ -128,32 +128,32 @@ export default function UrlInput({ onUrlSubmit, isLoading = false, error }: UrlI
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* URL Input Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Link className="h-5 w-5 text-gray-400" />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Link className="h-6 w-6 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
           </div>
           
           <input
             type="url"
             value={url}
             onChange={(e) => handleUrlChange(e.target.value)}
-            placeholder="貼上 Canva 簡報連結..."
-            className="w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="貼上您的 Canva 簡報連結 (例：https://www.canva.com/design/xxxxx/view)"
+            className="w-full pl-14 pr-24 py-4 text-lg border-2 border-gray-200 rounded-2xl bg-white/70 backdrop-blur-sm focus:ring-4 focus:ring-blue-200 focus:border-blue-400 focus:bg-white transition-all duration-300 placeholder-gray-400"
             disabled={isLoading}
           />
           
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-2">
+          <div className="absolute inset-y-0 right-0 pr-4 flex items-center gap-2">
             {isClient && navigator.clipboard && (
               <button
                 type="button"
                 onClick={pasteFromClipboard}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-medium"
                 disabled={isLoading}
               >
-                貼上
+                📋 貼上
               </button>
             )}
           </div>
@@ -161,21 +161,33 @@ export default function UrlInput({ onUrlSubmit, isLoading = false, error }: UrlI
 
         {/* Validation Status */}
         {(isValidating || validationResult) && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-300 ${
+            isValidating 
+              ? 'bg-blue-50 border-blue-200'
+              : validationResult?.isValid 
+                ? 'bg-green-50 border-green-200'
+                : 'bg-red-50 border-red-200'
+          }`}>
             {isValidating ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                <span className="text-gray-600">正在驗證連結...</span>
+                <div className="relative">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  <div className="absolute inset-0 w-5 h-5 border-2 border-blue-200 rounded-full animate-pulse"></div>
+                </div>
+                <span className="text-blue-700 font-medium">🔍 正在分析您的 Canva 設計...</span>
               </>
             ) : validationResult?.isValid ? (
               <>
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-green-700">{validationResult.message}</span>
+                <div className="relative">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className="absolute -inset-1 bg-green-200 rounded-full animate-ping opacity-20"></div>
+                </div>
+                <span className="text-green-700 font-medium">✅ {validationResult.message}</span>
               </>
             ) : (
               <>
-                <AlertCircle className="w-4 h-4 text-red-600" />
-                <span className="text-red-700">{validationResult?.message}</span>
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span className="text-red-700 font-medium">❌ {validationResult?.message}</span>
               </>
             )}
           </div>
@@ -183,9 +195,9 @@ export default function UrlInput({ onUrlSubmit, isLoading = false, error }: UrlI
 
         {/* Error Message */}
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl shadow-sm">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-            <span className="text-red-700">{error}</span>
+            <span className="text-red-700 font-medium">{error}</span>
           </div>
         )}
 
@@ -193,34 +205,63 @@ export default function UrlInput({ onUrlSubmit, isLoading = false, error }: UrlI
         <button
           type="submit"
           disabled={isLoading || !url.trim() || !validationResult?.isValid}
-          className={`w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 ${
+          className={`w-full py-4 px-6 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 transform ${
             isLoading || !url.trim() || !validationResult?.isValid
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105 active:scale-95'
           }`}
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>下載中...</span>
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span>🚀 處理中...</span>
             </>
           ) : (
             <>
-              <Download className="w-5 h-5" />
-              <span>開始下載</span>
+              <Download className="w-6 h-6" />
+              <span>✨ 開始神奇下載</span>
             </>
           )}
         </button>
       </form>
 
       {/* Usage Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="text-sm font-semibold text-blue-900 mb-2">使用說明：</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• 支援格式：https://www.canva.com/design/xxxxx/view</li>
-          <li>• 確保簡報為公開狀態或已分享</li>
-          <li>• 支援多頁簡報自動整合為 PDF</li>
-        </ul>
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-100 rounded-2xl p-6 shadow-inner">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <span className="text-white text-sm">💡</span>
+          </div>
+          <h4 className="text-lg font-bold text-gray-800">使用指南</h4>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-xs font-bold">1</span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">支援格式</p>
+              <p className="text-sm text-gray-600">canva.com/design/xxxxx</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-xs font-bold">2</span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">公開分享</p>
+              <p className="text-sm text-gray-600">確保設計可公開訪問</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-xs font-bold">3</span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">多頁支援</p>
+              <p className="text-sm text-gray-600">自動整合為單一檔案</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
