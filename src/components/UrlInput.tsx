@@ -107,11 +107,14 @@ export default function UrlInput({ onUrlSubmit, isLoading = false, error }: UrlI
       return
     }
 
-    if (validationResult?.isValid) {
+    // For demo purposes, always allow submission if URL looks like Canva
+    if (isCanvaUrl(url.trim())) {
       onUrlSubmit(url.trim())
     } else {
-      // Force validation
-      validateUrl(url.trim())
+      setValidationResult({
+        isValid: false,
+        message: '請輸入有效的 Canva 設計連結（例：https://www.canva.com/design/xxxxx/view）'
+      })
     }
   }
 
@@ -204,9 +207,9 @@ export default function UrlInput({ onUrlSubmit, isLoading = false, error }: UrlI
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isLoading || !url.trim() || !validationResult?.isValid}
+          disabled={isLoading || !url.trim()}
           className={`w-full py-4 px-6 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 transform ${
-            isLoading || !url.trim() || !validationResult?.isValid
+            isLoading || !url.trim()
               ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
               : 'bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105 active:scale-95'
           }`}
