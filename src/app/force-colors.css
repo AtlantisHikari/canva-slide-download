@@ -1,0 +1,23 @@
+/* 強制彩色樣式 - 覆蓋任何可能的白底黑字 */
+body {
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #e0e7ff 100%) !important;
+  color: #1f2937 !important;
+}
+
+.min-h-screen {
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #e0e7ff 100%) !important;
+}
+
+header {
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #6366f1) !important;
+}
+
+.card, .bg-white\/80 {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* 確保所有文字可見 */
+* {
+  color: inherit !important;
+}

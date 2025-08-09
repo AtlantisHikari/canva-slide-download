@@ -84,7 +84,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen" style={{ 
+      background: 'linear-gradient(135deg, rgb(248, 250, 252) 0%, rgb(239, 246, 255) 50%, rgb(224, 231, 255) 100%)',
+      minHeight: '100vh'
+    }}>
       {/* Header */}
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-90"></div>
@@ -102,7 +105,7 @@ export default function HomePage() {
             </p>
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-blue-100">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              🚀 VERCEL VERSION v4.0 - 即時彩色現代化設計 ({new Date().toLocaleDateString('zh-TW')})
+              🔥 FORCE UPDATE v5.0 - 強制彩色版本 {Date.now()}
             </div>
           </div>
         </div>
