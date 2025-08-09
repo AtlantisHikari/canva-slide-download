@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彩色診斷測試</title>
+</head>
+<body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background: linear-gradient(135deg, #ff0000 0%, #00ff00 50%, #0000ff 100%); min-height: 100vh;">
+    
+    <h1 style="color: white; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 2rem;">
+        🔍 彩色顯示診斷測試
+    </h1>
+    
+    <div style="background: rgba(255,255,255,0.9); padding: 2rem; border-radius: 10px; max-width: 800px; margin: 2rem auto;">
+        <h2 style="color: #333; margin-bottom: 1rem;">請回答以下問題：</h2>
+        
+        <div style="margin-bottom: 1rem; padding: 1rem; background: #ffcccc; border-radius: 5px; border: 2px solid red;">
+            <strong style="color: #cc0000;">❶ 您能看到這個頁面的紅綠藍漸層背景嗎？</strong>
+            <br>
+            <span style="color: #666;">□ 能看到彩色漸層 □ 只看到白色背景</span>
+        </div>
+        
+        <div style="margin-bottom: 1rem; padding: 1rem; background: #ccffcc; border-radius: 5px; border: 2px solid green;">
+            <strong style="color: #006600;">❷ 這個綠色背景區塊正常顯示嗎？</strong>
+            <br>
+            <span style="color: #666;">□ 能看到綠色 □ 顯示為白色或其他顏色</span>
+        </div>
+        
+        <div style="margin-bottom: 1rem; padding: 1rem; background: #ccccff; border-radius: 5px; border: 2px solid blue;">
+            <strong style="color: #0000cc;">❸ 這個藍色背景區塊正常嗎？</strong>
+            <br>
+            <span style="color: #666;">□ 能看到藍色 □ 顯示為白色或其他顏色</span>
+        </div>
+        
+        <div style="margin: 2rem 0; padding: 2rem; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1); border-radius: 10px; text-align: center; color: white; font-size: 1.2rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
+            ✨ 如果您能看到這個彩色區塊，表示瀏覽器支援彩色！ ✨
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <h3 style="color: #333;">您的瀏覽器資訊：</h3>
+            <div style="background: #f8f8f8; padding: 1rem; border-radius: 5px; font-family: monospace; font-size: 0.9rem;">
+                <script>
+                    document.write('<div>瀏覽器: ' + navigator.userAgent + '</div>');
+                    document.write('<div>螢幕: ' + screen.width + 'x' + screen.height + '</div>');
+                    document.write('<div>視窗: ' + window.innerWidth + 'x' + window.innerHeight + '</div>');
+                </script>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="/" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 1rem 2rem; border-radius: 25px; text-decoration: none; font-size: 1.1rem; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                🏠 返回主頁面
+            </a>
+        </div>
+    </div>
+    
+</body>
+</html>
