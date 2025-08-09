@@ -102,7 +102,7 @@ export default function HomePage() {
             </p>
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-blue-100">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              FINAL VERSION v3.0 - 最新現代化設計 ({new Date().toLocaleDateString('zh-TW')})
+              🚀 VERCEL VERSION v4.0 - 即時彩色現代化設計 ({new Date().toLocaleDateString('zh-TW')})
             </div>
           </div>
         </div>
