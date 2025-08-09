@@ -102,7 +102,7 @@ export default function HomePage() {
             </p>
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-blue-100">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              GitHub Pages 展示版本 - 完整功能請部署到 Vercel
+              GitHub Pages 最新版本 - 美觀現代化設計
             </div>
           </div>
         </div>
